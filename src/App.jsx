@@ -74,9 +74,9 @@ export default function App() {
               />
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !text}
                 className={`bg-teal-900 text-white text-sm font-medium px-6 py-3 rounded hover:bg-teal-950 focus:outline-none focus:ring transition-all focus:ring-offset-2 focus:ring-teal-900/20 ${
-                  loading ? "opacity-75" : "opacity-100"
+                  loading || !text ? "opacity-75 cursor-not-allowed" : "opacity-100"
                 }`}
               >
                 {loading ? "Sending..." : "Send Message"}
