@@ -1,24 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const MESSAGES = [
+  { sender: "user", body: "Hey Riches! 👋🏼" },
+  { sender: "bot", body: "Hello, Ask me anything about real estate 🤗" },
+];
 
 export default function App() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [messageList, setMessageList] = useState(MESSAGES);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      setTimeout(() => {
-        console.log({ text });
-        setLoading(false);
-        setText("");
-      }, 3000);
+      setMessageList((prev) => [...prev, { sender: "user", body: text }]);
+      let response = await fetch("http://34.125.12.180:5000/query/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `user_query=${text}`,
+      });
+      response = await response.json();
+      setMessageList((prev) => [...prev, { sender: "bot", body: response.model_reply || "..." }]);
+      setText("");
     } catch (error) {
       console.log(error);
     } finally {
-      // setLoading(false);
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const el = document.querySelector("#messages");
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messageList]);
 
   // eslint-disable-next-line react/prop-types
   const Message = ({ bot, body }) => {
@@ -48,17 +65,9 @@ export default function App() {
             Riches
           </header>
           {/*  */}
-          <main className="h-[45vh] bg-gray-100 px-4 py-4 flex flex-col gap-6 overflow-y-auto">
-            <Message body="Hey Riches! 👋🏼" />
-
-            {[...Array(10)].map((_, i) => (
-              <Message
-                key={i}
-                bot={!(i % 2)}
-                body="Hi Fella 👋🏼. Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed expedita, praesentium ut
-                accusamus assumenda dolore incidunt quibusdam nisi nulla officiis nobis tenetur exercitationem cum sit
-                maiores modi. Suscipit, eaque laboriosam."
-              />
+          <main id="messages" className="h-[45vh] bg-gray-100 px-4 py-4 flex flex-col gap-6 overflow-y-auto">
+            {messageList.map((item, i) => (
+              <Message key={i} bot={item.sender === "bot"} body={item.body} />
             ))}
           </main>
           {/*  */}
