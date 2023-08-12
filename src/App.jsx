@@ -5,6 +5,53 @@ const MESSAGES = [
   { sender: "bot", body: "Hello, Ask me anything about real estate 🤗" },
 ];
 
+// eslint-disable-next-line react/prop-types
+const Message = ({ bot, body, related = [] }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className={`flex ${!bot ? "justify-end" : ""}`}>
+      <div
+        className={`p-4 max-w-[80%] text-sm rounded-3xl shadow ${
+          bot ? "rounded-bl-none bg-teal-900 text-white" : "rounded-br-none bg-white"
+        }`}
+      >
+        <p>{body}</p>
+
+        {related.length ? (
+          <div className="mt-4">
+            {!show ? (
+              <button className="underline decoration-dotted font-medium" onClick={() => setShow(true)}>
+                Show More
+              </button>
+            ) : (
+              <div>
+                <span className="font-medium underline uppercase">Similar Listings</span>
+                {related.map((el, i) => (
+                  <>
+                    <ul key={i + "#"} className="list-none mt-2 mb-4 text-xs">
+                      {Object.entries(el).map(([key, val]) => (
+                        <li key={key} className="mb-2">
+                          <span className="uppercase">{key}: </span>
+                          {val}
+                        </li>
+                      ))}
+                    </ul>
+                    {i < related.length - 1 && <hr className="mb-4" />}
+                  </>
+                ))}
+                <button className="underline decoration-dotted" onClick={() => setShow(false)}>
+                  Hide All
+                </button>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +70,10 @@ export default function App() {
         body: `user_query=${text}`,
       });
       response = await response.json();
-      setMessageList((prev) => [...prev, { sender: "bot", body: response.model_reply || "..." }]);
+      setMessageList((prev) => [
+        ...prev,
+        { sender: "bot", body: response.model_reply || "...", related: response.similar_listings },
+      ]);
       setText("");
     } catch (error) {
       console.log(error);
@@ -36,21 +86,6 @@ export default function App() {
     const el = document.querySelector("#messages");
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messageList]);
-
-  // eslint-disable-next-line react/prop-types
-  const Message = ({ bot, body }) => {
-    return (
-      <div className={`flex ${!bot ? "justify-end" : ""}`}>
-        <div
-          className={`inline-flex p-4 max-w-[75%] text-sm rounded-3xl shadow ${
-            bot ? "rounded-bl-none bg-teal-900 text-white" : "rounded-br-none bg-white"
-          }`}
-        >
-          {body}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="bg-gray-200 h-screen p-4">
@@ -67,7 +102,7 @@ export default function App() {
           {/*  */}
           <main id="messages" className="h-[45vh] bg-gray-100 px-4 py-4 flex flex-col gap-6 overflow-y-auto">
             {messageList.map((item, i) => (
-              <Message key={i} bot={item.sender === "bot"} body={item.body} />
+              <Message key={i} bot={item.sender === "bot"} body={item.body} related={item.related} />
             ))}
           </main>
           {/*  */}
